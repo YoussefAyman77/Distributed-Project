@@ -43,7 +43,7 @@ public final class CheckoutDialog {
     }
 
     public static void showReceipt(JFrame owner, List<ReceiptLine> lines, double total) {
-        JDialog dialog = createBaseDialog(owner, "Order complete", 480, 560);
+        JDialog dialog = createBaseDialog(owner, "Order complete", 540, 720);
         dialog.setContentPane(buildReceiptContent(dialog, lines, total, DialogType.SUCCESS));
         dialog.setVisible(true);
     }
@@ -92,7 +92,7 @@ public final class CheckoutDialog {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setPaint(new GradientPaint(0, 0, UiTheme.PRIMARY_DEEP, getWidth(), getHeight(), UiTheme.ACCENT));
+                g2.setPaint(new GradientPaint(0, 0, new Color(10, 26, 14), getWidth(), getHeight(), UiTheme.PRIMARY_DEEP));
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 28, 28);
                 g2.dispose();
             }
@@ -124,7 +124,7 @@ public final class CheckoutDialog {
         }
 
         JScrollPane scroll = UiKit.styledScroll(list);
-        scroll.setPreferredSize(new Dimension(400, 220));
+        scroll.setPreferredSize(new Dimension(480, 400));
         return scroll;
     }
 
@@ -212,7 +212,7 @@ public final class CheckoutDialog {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setColor(new Color(28, 25, 23, 160));
+                g2.setColor(new Color(5, 14, 8, 175));
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 g2.dispose();
             }

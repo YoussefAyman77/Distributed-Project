@@ -33,9 +33,9 @@ import javax.swing.border.EmptyBorder;
  */
 public class LoginFrame extends JFrame {
     private static final String SERVER_HOST = "localhost";
-    private static final int SERVER_PORT = 1254;
+    private static final int    SERVER_PORT = 1254;
 
-    private final JTextField usernameField = new JTextField("Username");
+    private final JTextField    usernameField = new JTextField("Username");
     private final JPasswordField passwordField = new JPasswordField("Password");
     private final JLabel statusLabel = UiKit.label(
             "Sign in to browse fresh produce",
@@ -44,8 +44,8 @@ public class LoginFrame extends JFrame {
             SwingConstants.CENTER);
 
     public LoginFrame() {
-        setTitle("Fresh Basket - Sign In");
-        setSize(940, 620);
+        setTitle("Fresh Basket — Sign In");
+        setSize(980, 640);
         setMinimumSize(new Dimension(940, 620));
         setLocationRelativeTo(null);
         setResizable(false);
@@ -57,7 +57,7 @@ public class LoginFrame extends JFrame {
         JPanel background = UiKit.decorativeBackdrop(new BorderLayout());
         background.setBorder(new EmptyBorder(36, 48, 36, 48));
 
-        UiKit.RoundedPanel card = new UiKit.RoundedPanel(36, UiTheme.CARD, 16, true);
+        UiKit.RoundedPanel card = new UiKit.RoundedPanel(36, UiTheme.CARD, 18, true);
         card.setLayout(new GridLayout(1, 2, 0, 0));
         card.add(createHeroPanel());
         card.add(createFormPanel());
@@ -67,48 +67,48 @@ public class LoginFrame extends JFrame {
     }
 
     private JPanel createHeroPanel() {
-        JPanel hero = UiKit.gradientCard(new BorderLayout(), UiTheme.PRIMARY_DEEP, UiTheme.ROSE);
+        // Deep forest → emerald green gradient
+        JPanel hero = UiKit.gradientCard(new BorderLayout(), new Color(10, 26, 14), UiTheme.PRIMARY_DEEP);
         hero.setBorder(new EmptyBorder(48, 40, 48, 40));
 
-        JLabel iconLabel = UiKit.label("\uD83C\uDF4E\uD83C\uDF4C\uD83E\uDD6C",
-                UiTheme.FONT_EMOJI_HERO, Color.WHITE, SwingConstants.CENTER);
+        // Hero image — fresh market scene
+        JLabel iconLabel = UiKit.imageLabel("GroceryClient/resources/images/hero.jpg", 320, 200);
 
         JLabel titleLabel = UiKit.label(
                 "<html><center>Fresh Basket<br><span style='font-size:17px;font-weight:normal'>Market</span></center></html>",
                 UiTheme.FONT_DISPLAY,
-                Color.WHITE,
+                UiTheme.TEXT_ON_PRIMARY,
                 SwingConstants.CENTER);
 
         JLabel subtitleLabel = UiKit.label(
-                "<html><center style='color:#FFEDD5'>A warm, beautiful place to shop<br>for fruit and vegetables.</center></html>",
+                "<html><center style='color:#D1FAE5'>Farm-fresh produce delivered<br>straight to your basket.</center></html>",
                 UiTheme.FONT_BODY,
                 UiTheme.TEXT_CREAM,
                 SwingConstants.CENTER);
 
-        JPanel features = UiKit.rounded(UiTheme.HIGHLIGHT, 24);
-        features.setLayout(new GridLayout(3, 1, 0, 12));
+        // Feature box with gold checkmarks
+        JPanel features = UiKit.rounded(new Color(10, 36, 18), 24);
+        features.setLayout(new GridLayout(3, 1, 0, 14));
         features.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(255, 255, 255, 140), 1),
-                new EmptyBorder(20, 22, 20, 22)));
-        features.add(featureRow("Curated produce"));
-        features.add(featureRow("Live basket totals"));
-        features.add(featureRow("Quick checkout"));
+                BorderFactory.createLineBorder(new Color(34, 197, 94, 50), 1),
+                new EmptyBorder(22, 24, 22, 24)));
+        features.add(featureRow("\u2714  Curated fresh produce"));
+        features.add(featureRow("\u2714  Live basket totals"));
+        features.add(featureRow("\u2714  Quick & easy checkout"));
 
         JPanel stack = UiKit.transparent(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
-        gbc.insets = new Insets(0, 0, 16, 0);
-        gbc.gridy = 0;
+
+        gbc.gridy = 0; gbc.insets = new Insets(0, 0, 18, 0);
         stack.add(iconLabel, gbc);
-        gbc.gridy = 1;
+        gbc.gridy = 1; gbc.insets = new Insets(0, 0, 10, 0);
         stack.add(titleLabel, gbc);
-        gbc.gridy = 2;
-        gbc.insets = new Insets(0, 0, 28, 0);
+        gbc.gridy = 2; gbc.insets = new Insets(0, 0, 28, 0);
         stack.add(subtitleLabel, gbc);
-        gbc.gridy = 3;
-        gbc.insets = new Insets(0, 8, 0, 8);
+        gbc.gridy = 3; gbc.insets = new Insets(0, 8, 0, 8);
         stack.add(features, gbc);
 
         hero.add(stack, BorderLayout.CENTER);
@@ -116,8 +116,7 @@ public class LoginFrame extends JFrame {
     }
 
     private JLabel featureRow(String text) {
-        return UiKit.label("  +  " + text,
-                UiTheme.FONT_BODY_BOLD, UiTheme.PRIMARY_DEEP, SwingConstants.LEFT);
+        return UiKit.label(text, UiTheme.FONT_BODY_BOLD, UiTheme.ACCENT_GLOW, SwingConstants.LEFT);
     }
 
     private JPanel createFormPanel() {
@@ -132,13 +131,13 @@ public class LoginFrame extends JFrame {
         addPlaceholderBehavior(usernameField, "Username");
         addPasswordPlaceholderBehavior(passwordField, "Password");
 
-        JLabel headingLabel = UiKit.label("Welcome back",
+        JLabel headingLabel = UiKit.label("Welcome back \uD83C\uDF3F",
                 UiTheme.FONT_DISPLAY, UiTheme.TEXT_DARK, SwingConstants.LEFT);
         JLabel helpLabel = UiKit.label(
                 "Enter your credentials to open the market.",
                 UiTheme.FONT_BODY, UiTheme.TEXT_MUTED, SwingConstants.LEFT);
 
-        javax.swing.JButton loginButton = UiKit.primaryButton("Sign in to shop", this::attemptLogin);
+        javax.swing.JButton loginButton = UiKit.primaryButton("Sign in to shop \u2192", this::attemptLogin);
         loginButton.setPreferredSize(new Dimension(360, 54));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -146,28 +145,22 @@ public class LoginFrame extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
-        gbc.gridy = 0;
-        gbc.insets = new Insets(0, 0, 8, 0);
+        gbc.gridy = 0; gbc.insets = new Insets(0, 0, 8, 0);
         panel.add(headingLabel, gbc);
 
-        gbc.gridy = 1;
-        gbc.insets = new Insets(0, 0, 32, 0);
+        gbc.gridy = 1; gbc.insets = new Insets(0, 0, 36, 0);
         panel.add(helpLabel, gbc);
 
-        gbc.gridy = 2;
-        gbc.insets = new Insets(0, 0, 20, 0);
+        gbc.gridy = 2; gbc.insets = new Insets(0, 0, 20, 0);
         panel.add(UiKit.fieldShell("Username", usernameField), gbc);
 
-        gbc.gridy = 3;
-        gbc.insets = new Insets(0, 0, 28, 0);
+        gbc.gridy = 3; gbc.insets = new Insets(0, 0, 28, 0);
         panel.add(UiKit.fieldShell("Password", passwordField), gbc);
 
-        gbc.gridy = 4;
-        gbc.insets = new Insets(0, 0, 16, 0);
+        gbc.gridy = 4; gbc.insets = new Insets(0, 0, 16, 0);
         panel.add(loginButton, gbc);
 
-        gbc.gridy = 5;
-        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridy = 5; gbc.insets = new Insets(0, 0, 0, 0);
         panel.add(statusLabel, gbc);
 
         return panel;
@@ -175,16 +168,13 @@ public class LoginFrame extends JFrame {
 
     private void addPlaceholderBehavior(JTextField field, String placeholder) {
         field.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
+            @Override public void focusGained(FocusEvent e) {
                 if (placeholder.equals(field.getText())) {
                     field.setText("");
                     field.setForeground(UiTheme.TEXT_DARK);
                 }
             }
-
-            @Override
-            public void focusLost(FocusEvent e) {
+            @Override public void focusLost(FocusEvent e) {
                 if (field.getText().trim().isEmpty()) {
                     field.setText(placeholder);
                     field.setForeground(UiTheme.TEXT_MUTED);
@@ -195,17 +185,14 @@ public class LoginFrame extends JFrame {
 
     private void addPasswordPlaceholderBehavior(JPasswordField field, String placeholder) {
         field.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
+            @Override public void focusGained(FocusEvent e) {
                 if (placeholder.equals(new String(field.getPassword()))) {
                     field.setText("");
                     field.setEchoChar('\u2022');
                     field.setForeground(UiTheme.TEXT_DARK);
                 }
             }
-
-            @Override
-            public void focusLost(FocusEvent e) {
+            @Override public void focusLost(FocusEvent e) {
                 if (new String(field.getPassword()).trim().isEmpty()) {
                     field.setText(placeholder);
                     field.setEchoChar((char) 0);
@@ -227,7 +214,7 @@ public class LoginFrame extends JFrame {
         try {
             Socket socket = new Socket(SERVER_HOST, SERVER_PORT);
             DataOutputStream output = new DataOutputStream(socket.getOutputStream());
-            DataInputStream input = new DataInputStream(socket.getInputStream());
+            DataInputStream  input  = new DataInputStream(socket.getInputStream());
 
             output.writeUTF(username + ":" + password);
             output.flush();
@@ -263,17 +250,17 @@ public class LoginFrame extends JFrame {
     }
 
     private void closeSocket(Socket socket) {
-        try {
-            socket.close();
-        } catch (IOException ignored) {
-        }
+        try { socket.close(); } catch (IOException ignored) {}
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {
+                Class<?> flatLafClass = Class.forName("com.formdev.flatlaf.FlatDarkLaf");
+                flatLafClass.getMethod("setup").invoke(null);
+            } catch (Exception e) {
+                try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
+                catch (Exception ignored) {}
             }
             new LoginFrame().setVisible(true);
         });
