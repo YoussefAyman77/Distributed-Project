@@ -1,19 +1,15 @@
 package client;
 
+import client.ui.CheckoutDialog;
+import client.ui.UiKit;
+import client.ui.UiTheme;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.Point;
-import java.awt.RenderingHints;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.DataInputStream;
@@ -22,10 +18,8 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
@@ -41,23 +35,18 @@ public class LoginFrame extends JFrame {
     private static final String SERVER_HOST = "localhost";
     private static final int SERVER_PORT = 1254;
 
-    private static final Color FOREST = new Color(20, 83, 45);
-    private static final Color GREEN = new Color(22, 163, 74);
-    private static final Color MINT = new Color(220, 252, 231);
-    private static final Color CREAM = new Color(255, 251, 235);
-    private static final Color FIELD_BORDER = new Color(187, 247, 208);
-    private static final Color TEXT_DARK = new Color(31, 41, 55);
-    private static final Color TEXT_MUTED = new Color(107, 114, 128);
-    private static final Color ERROR_RED = new Color(220, 38, 38);
-
     private final JTextField usernameField = new JTextField("Username");
     private final JPasswordField passwordField = new JPasswordField("Password");
-    private final JLabel statusLabel = new JLabel("Enter your shop credentials to continue");
+    private final JLabel statusLabel = UiKit.label(
+            "Sign in to browse fresh produce",
+            UiTheme.FONT_BODY_BOLD,
+            UiTheme.TEXT_MUTED,
+            SwingConstants.CENTER);
 
     public LoginFrame() {
-        setTitle("Grocery Shop Login");
-        setSize(860, 560);
-        setMinimumSize(new Dimension(860, 560));
+        setTitle("Fresh Basket - Sign In");
+        setSize(940, 620);
+        setMinimumSize(new Dimension(940, 620));
         setLocationRelativeTo(null);
         setResizable(false);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -65,12 +54,11 @@ public class LoginFrame extends JFrame {
     }
 
     private JPanel createContentPanel() {
-        GradientPanel background = new GradientPanel(new BorderLayout(), new Color(236, 253, 245), CREAM);
-        background.setBorder(new EmptyBorder(34, 42, 34, 42));
+        JPanel background = UiKit.decorativeBackdrop(new BorderLayout());
+        background.setBorder(new EmptyBorder(36, 48, 36, 48));
 
-        RoundedPanel card = new RoundedPanel(34, Color.WHITE);
+        UiKit.RoundedPanel card = new UiKit.RoundedPanel(36, UiTheme.CARD, 16, true);
         card.setLayout(new GridLayout(1, 2, 0, 0));
-        card.setBorder(new EmptyBorder(0, 0, 0, 0));
         card.add(createHeroPanel());
         card.add(createFormPanel());
 
@@ -79,79 +67,79 @@ public class LoginFrame extends JFrame {
     }
 
     private JPanel createHeroPanel() {
-        GradientPanel hero = new GradientPanel(new BorderLayout(), FOREST, new Color(22, 163, 74));
-        hero.setBorder(new EmptyBorder(42, 36, 42, 36));
+        JPanel hero = UiKit.gradientCard(new BorderLayout(), UiTheme.PRIMARY_DEEP, UiTheme.ROSE);
+        hero.setBorder(new EmptyBorder(48, 40, 48, 40));
 
-        JLabel iconLabel = new JLabel("\uD83D\uDED2", SwingConstants.CENTER);
-        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 68));
+        JLabel iconLabel = UiKit.label("\uD83C\uDF4E\uD83C\uDF4C\uD83E\uDD6C",
+                UiTheme.FONT_EMOJI_HERO, Color.WHITE, SwingConstants.CENTER);
 
-        JLabel titleLabel = new JLabel("<html><center>Fresh Basket<br>Market</center></html>", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 36));
-        titleLabel.setForeground(Color.WHITE);
+        JLabel titleLabel = UiKit.label(
+                "<html><center>Fresh Basket<br><span style='font-size:17px;font-weight:normal'>Market</span></center></html>",
+                UiTheme.FONT_DISPLAY,
+                Color.WHITE,
+                SwingConstants.CENTER);
 
-        JLabel subtitleLabel = new JLabel("<html><center>Beautiful groceries, live TCP checkout,<br>and prices calculated by the server.</center></html>", SwingConstants.CENTER);
-        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        subtitleLabel.setForeground(new Color(220, 252, 231));
+        JLabel subtitleLabel = UiKit.label(
+                "<html><center style='color:#FFEDD5'>A warm, beautiful place to shop<br>for fruit and vegetables.</center></html>",
+                UiTheme.FONT_BODY,
+                UiTheme.TEXT_CREAM,
+                SwingConstants.CENTER);
 
-        RoundedPanel featurePanel = new RoundedPanel(26, new Color(240, 253, 244));
-        featurePanel.setLayout(new GridLayout(3, 1, 0, 10));
-        featurePanel.setBorder(new EmptyBorder(18, 20, 18, 20));
-        featurePanel.add(createFeatureLabel("Fresh fruit cards"));
-        featurePanel.add(createFeatureLabel("Persistent socket session"));
-        featurePanel.add(createFeatureLabel("Server-side total calculation"));
+        JPanel features = UiKit.rounded(UiTheme.HIGHLIGHT, 24);
+        features.setLayout(new GridLayout(3, 1, 0, 12));
+        features.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(255, 255, 255, 140), 1),
+                new EmptyBorder(20, 22, 20, 22)));
+        features.add(featureRow("Curated produce"));
+        features.add(featureRow("Live basket totals"));
+        features.add(featureRow("Quick checkout"));
 
-        JPanel textPanel = new TransparentPanel(new GridBagLayout());
+        JPanel stack = UiKit.transparent(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
-        gbc.insets = new Insets(0, 0, 18, 0);
+        gbc.insets = new Insets(0, 0, 16, 0);
         gbc.gridy = 0;
-        textPanel.add(iconLabel, gbc);
+        stack.add(iconLabel, gbc);
         gbc.gridy = 1;
-        textPanel.add(titleLabel, gbc);
+        stack.add(titleLabel, gbc);
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 0, 28, 0);
-        textPanel.add(subtitleLabel, gbc);
+        stack.add(subtitleLabel, gbc);
         gbc.gridy = 3;
-        gbc.insets = new Insets(0, 18, 0, 18);
-        textPanel.add(featurePanel, gbc);
+        gbc.insets = new Insets(0, 8, 0, 8);
+        stack.add(features, gbc);
 
-        hero.add(textPanel, BorderLayout.CENTER);
+        hero.add(stack, BorderLayout.CENTER);
         return hero;
     }
 
-    private JLabel createFeatureLabel(String text) {
-        JLabel label = new JLabel("  " + text);
-        label.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        label.setForeground(FOREST);
-        return label;
+    private JLabel featureRow(String text) {
+        return UiKit.label("  +  " + text,
+                UiTheme.FONT_BODY_BOLD, UiTheme.PRIMARY_DEEP, SwingConstants.LEFT);
     }
 
     private JPanel createFormPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setOpaque(false);
-        panel.setBorder(new EmptyBorder(44, 48, 44, 48));
+        JPanel panel = UiKit.transparent(new GridBagLayout());
+        panel.setBorder(new EmptyBorder(52, 52, 52, 52));
 
-        styleTextField(usernameField);
-        stylePasswordField(passwordField);
+        UiKit.styleInput(usernameField);
+        UiKit.stylePassword(passwordField);
+        usernameField.setForeground(UiTheme.TEXT_MUTED);
+        passwordField.setForeground(UiTheme.TEXT_MUTED);
+        passwordField.setEchoChar((char) 0);
         addPlaceholderBehavior(usernameField, "Username");
         addPasswordPlaceholderBehavior(passwordField, "Password");
 
-        JButton loginButton = new RoundedButton("Login");
-        loginButton.addActionListener(e -> attemptLogin());
+        JLabel headingLabel = UiKit.label("Welcome back",
+                UiTheme.FONT_DISPLAY, UiTheme.TEXT_DARK, SwingConstants.LEFT);
+        JLabel helpLabel = UiKit.label(
+                "Enter your credentials to open the market.",
+                UiTheme.FONT_BODY, UiTheme.TEXT_MUTED, SwingConstants.LEFT);
 
-        JLabel headingLabel = new JLabel("Welcome back");
-        headingLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
-        headingLabel.setForeground(TEXT_DARK);
-
-        JLabel helpLabel = new JLabel("<html>Enter the username and password, then open the grocery shop.</html>");
-        helpLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        helpLabel.setForeground(TEXT_MUTED);
-
-        statusLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        statusLabel.setForeground(TEXT_MUTED);
-        statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        javax.swing.JButton loginButton = UiKit.primaryButton("Sign in to shop", this::attemptLogin);
+        loginButton.setPreferredSize(new Dimension(360, 54));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -159,22 +147,23 @@ public class LoginFrame extends JFrame {
         gbc.weightx = 1.0;
 
         gbc.gridy = 0;
-        gbc.insets = new Insets(0, 0, 6, 0);
+        gbc.insets = new Insets(0, 0, 8, 0);
         panel.add(headingLabel, gbc);
 
         gbc.gridy = 1;
-        gbc.insets = new Insets(0, 0, 30, 0);
+        gbc.insets = new Insets(0, 0, 32, 0);
         panel.add(helpLabel, gbc);
 
         gbc.gridy = 2;
-        gbc.insets = new Insets(0, 0, 18, 0);
-        panel.add(createFieldShell("Username", usernameField), gbc);
+        gbc.insets = new Insets(0, 0, 20, 0);
+        panel.add(UiKit.fieldShell("Username", usernameField), gbc);
 
         gbc.gridy = 3;
-        panel.add(createFieldShell("Password", passwordField), gbc);
+        gbc.insets = new Insets(0, 0, 28, 0);
+        panel.add(UiKit.fieldShell("Password", passwordField), gbc);
 
         gbc.gridy = 4;
-        gbc.insets = new Insets(24, 0, 14, 0);
+        gbc.insets = new Insets(0, 0, 16, 0);
         panel.add(loginButton, gbc);
 
         gbc.gridy = 5;
@@ -184,46 +173,13 @@ public class LoginFrame extends JFrame {
         return panel;
     }
 
-    private JPanel createFieldShell(String label, JTextField field) {
-        RoundedPanel shell = new RoundedPanel(22, new Color(248, 250, 252));
-        shell.setLayout(new BorderLayout(8, 6));
-        shell.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(FIELD_BORDER, 2),
-                new EmptyBorder(12, 16, 12, 16)));
-
-        JLabel fieldLabel = new JLabel(label);
-        fieldLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        fieldLabel.setForeground(FOREST);
-
-        shell.add(fieldLabel, BorderLayout.NORTH);
-        shell.add(field, BorderLayout.CENTER);
-        return shell;
-    }
-
-    private void styleTextField(JTextField field) {
-        field.setPreferredSize(new Dimension(340, 42));
-        field.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        field.setForeground(TEXT_MUTED);
-        field.setBackground(Color.WHITE);
-        field.setOpaque(true);
-        field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(229, 231, 235), 1),
-                new EmptyBorder(8, 12, 8, 12)));
-        field.setCaretColor(FOREST);
-    }
-
-    private void stylePasswordField(JPasswordField field) {
-        styleTextField(field);
-        field.setEchoChar((char) 0);
-    }
-
     private void addPlaceholderBehavior(JTextField field, String placeholder) {
         field.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
                 if (placeholder.equals(field.getText())) {
                     field.setText("");
-                    field.setForeground(TEXT_DARK);
+                    field.setForeground(UiTheme.TEXT_DARK);
                 }
             }
 
@@ -231,7 +187,7 @@ public class LoginFrame extends JFrame {
             public void focusLost(FocusEvent e) {
                 if (field.getText().trim().isEmpty()) {
                     field.setText(placeholder);
-                    field.setForeground(TEXT_MUTED);
+                    field.setForeground(UiTheme.TEXT_MUTED);
                 }
             }
         });
@@ -244,7 +200,7 @@ public class LoginFrame extends JFrame {
                 if (placeholder.equals(new String(field.getPassword()))) {
                     field.setText("");
                     field.setEchoChar('\u2022');
-                    field.setForeground(TEXT_DARK);
+                    field.setForeground(UiTheme.TEXT_DARK);
                 }
             }
 
@@ -253,7 +209,7 @@ public class LoginFrame extends JFrame {
                 if (new String(field.getPassword()).trim().isEmpty()) {
                     field.setText(placeholder);
                     field.setEchoChar((char) 0);
-                    field.setForeground(TEXT_MUTED);
+                    field.setForeground(UiTheme.TEXT_MUTED);
                 }
             }
         });
@@ -278,8 +234,8 @@ public class LoginFrame extends JFrame {
 
             String response = input.readUTF();
             if ("LOGIN_SUCCESS".equals(response)) {
-                statusLabel.setForeground(FOREST);
-                statusLabel.setText("Login successful. Opening market...");
+                statusLabel.setForeground(UiTheme.SUCCESS);
+                statusLabel.setText("Welcome! Opening the market...");
                 dispose();
                 new ShopFrame(socket, input, output).setVisible(true);
             } else {
@@ -287,47 +243,29 @@ public class LoginFrame extends JFrame {
                 showFailure("Invalid username or password.");
             }
         } catch (ConnectException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Could not connect to the server. Please run Server.java first.",
-                    "Connection Refused",
-                    JOptionPane.ERROR_MESSAGE);
+            CheckoutDialog.showError(this,
+                    "Cannot connect",
+                    "The shop is unavailable. Please start the server and try again.");
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Connection error: " + e.getMessage(),
-                    "Network Error",
-                    JOptionPane.ERROR_MESSAGE);
+            CheckoutDialog.showError(this,
+                    "Connection problem",
+                    "Something went wrong while connecting. Please try again.");
         }
     }
 
     private void showFailure(String message) {
-        statusLabel.setForeground(ERROR_RED);
+        statusLabel.setForeground(UiTheme.ERROR);
         statusLabel.setText(message);
         passwordField.setText("");
         passwordField.setEchoChar('\u2022');
-        passwordField.setForeground(TEXT_DARK);
-        shakeWindow();
-    }
-
-    private void shakeWindow() {
-        Point originalLocation = getLocation();
-        for (int i = 0; i < 8; i++) {
-            int offset = (i % 2 == 0) ? 8 : -8;
-            setLocation(originalLocation.x + offset, originalLocation.y);
-            try {
-                Thread.sleep(18);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-        setLocation(originalLocation);
+        passwordField.setForeground(UiTheme.TEXT_DARK);
+        UiKit.shakeWindow(this);
     }
 
     private void closeSocket(Socket socket) {
         try {
             socket.close();
         } catch (IOException ignored) {
-            // Nothing else to do when closing a failed login connection.
         }
     }
 
@@ -336,83 +274,8 @@ public class LoginFrame extends JFrame {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception ignored) {
-                // Use default Swing look and feel if the system theme is unavailable.
             }
             new LoginFrame().setVisible(true);
         });
-    }
-
-    private static class GradientPanel extends JPanel {
-        private final Color startColor;
-        private final Color endColor;
-
-        private GradientPanel(java.awt.LayoutManager layout, Color startColor, Color endColor) {
-            super(layout);
-            this.startColor = startColor;
-            this.endColor = endColor;
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setPaint(new GradientPaint(0, 0, startColor, getWidth(), getHeight(), endColor));
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 34, 34);
-            g2.dispose();
-            super.paintComponent(g);
-        }
-    }
-
-    private static class RoundedPanel extends JPanel {
-        private final int radius;
-        private final Color backgroundColor;
-
-        private RoundedPanel(int radius, Color backgroundColor) {
-            this.radius = radius;
-            this.backgroundColor = backgroundColor;
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(backgroundColor);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
-            g2.dispose();
-            super.paintComponent(g);
-        }
-    }
-
-    private static class TransparentPanel extends JPanel {
-        private TransparentPanel(java.awt.LayoutManager layout) {
-            super(layout);
-            setOpaque(false);
-        }
-    }
-
-    private static class RoundedButton extends JButton {
-        private RoundedButton(String text) {
-            super(text);
-            setPreferredSize(new Dimension(360, 54));
-            setBackground(FOREST);
-            setForeground(Color.WHITE);
-            setFont(new Font("Segoe UI", Font.BOLD, 17));
-            setFocusPainted(false);
-            setBorderPainted(false);
-            setContentAreaFilled(false);
-            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setPaint(new GradientPaint(0, 0, GREEN, getWidth(), getHeight(), FOREST));
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
-            g2.dispose();
-            super.paintComponent(g);
-        }
     }
 }

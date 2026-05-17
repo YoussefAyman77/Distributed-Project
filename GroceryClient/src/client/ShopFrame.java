@@ -1,16 +1,13 @@
 package client;
 
+import client.ui.CheckoutDialog;
+import client.ui.UiKit;
+import client.ui.UiTheme;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridLayout;
-import java.awt.RenderingHints;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.DataInputStream;
@@ -18,17 +15,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
@@ -36,41 +31,49 @@ import javax.swing.border.EmptyBorder;
  * Modern grocery shop window. Reuses the socket created by LoginFrame.
  */
 public class ShopFrame extends JFrame {
-    private static final Color FOREST = new Color(20, 83, 45);
-    private static final Color GREEN = new Color(22, 163, 74);
-    private static final Color MINT = new Color(220, 252, 231);
-    private static final Color CREAM = new Color(255, 251, 235);
-    private static final Color CARD = new Color(255, 255, 255);
-    private static final Color TEXT_DARK = new Color(31, 41, 55);
-    private static final Color TEXT_MUTED = new Color(107, 114, 128);
     private static final DecimalFormat MONEY_FORMAT = new DecimalFormat("0.00");
 
     private static final Map<String, GroceryItem> ITEMS = new LinkedHashMap<String, GroceryItem>();
 
     static {
-        ITEMS.put("Apples", new GroceryItem("\uD83C\uDF4E", "Apples", 20.0, new Color(254, 226, 226)));
-        ITEMS.put("Banana", new GroceryItem("\uD83C\uDF4C", "Banana", 30.0, new Color(254, 249, 195)));
-        ITEMS.put("Oranges", new GroceryItem("\uD83C\uDF4A", "Oranges", 10.0, new Color(255, 237, 213)));
-        ITEMS.put("Tomatoes", new GroceryItem("\uD83C\uDF45", "Tomatoes", 15.0, new Color(255, 228, 230)));
-        ITEMS.put("Potatoes", new GroceryItem("\uD83E\uDD54", "Potatoes", 8.0, new Color(254, 243, 199)));
-        ITEMS.put("Grapes", new GroceryItem("\uD83C\uDF47", "Grapes", 45.0, new Color(243, 232, 255)));
+        ITEMS.put("Apples", new GroceryItem("\uD83C\uDF4E", "Apples", "Sweet & crisp", 20.0,
+                new Color(255, 228, 225), new Color(185, 28, 28)));
+        ITEMS.put("Banana", new GroceryItem("\uD83C\uDF4C", "Banana", "Perfect ripeness", 30.0,
+                new Color(254, 249, 195), new Color(161, 98, 7)));
+        ITEMS.put("Oranges", new GroceryItem("\uD83C\uDF4A", "Oranges", "Juicy & bright", 10.0,
+                new Color(255, 237, 213), new Color(194, 65, 12)));
+        ITEMS.put("Tomatoes", new GroceryItem("\uD83C\uDF45", "Tomatoes", "Vine-ripened", 15.0,
+                new Color(255, 228, 230), new Color(190, 18, 60)));
+        ITEMS.put("Potatoes", new GroceryItem("\uD83E\uDD54", "Potatoes", "Farm staple", 8.0,
+                new Color(254, 243, 199), new Color(146, 64, 14)));
+        ITEMS.put("Grapes", new GroceryItem("\uD83C\uDF47", "Grapes", "Seedless bunch", 45.0,
+                new Color(252, 231, 243), new Color(157, 23, 77)));
     }
 
     private final Socket socket;
     private final DataInputStream input;
     private final DataOutputStream output;
-    private final Map<String, JSpinner> quantitySpinners = new LinkedHashMap<String, JSpinner>();
-    private final JLabel totalLabel = new JLabel("0.00 LE");
-    private final JLabel itemCountLabel = new JLabel("Choose your groceries");
+    private final Map<String, UiKit.QuantityStepper> steppers = new LinkedHashMap<String, UiKit.QuantityStepper>();
+    private final JLabel totalLabel = UiKit.label("0.00 LE", UiTheme.FONT_TOTAL, UiTheme.PRIMARY_DEEP, SwingConstants.CENTER);
+    private final JLabel itemCountLabel = UiKit.label(
+            "Add items to your basket",
+            UiTheme.FONT_CAPTION,
+            UiTheme.TEXT_MUTED,
+            SwingConstants.LEFT);
+    private final JLabel estimateHint = UiKit.label(
+            "Updates as you shop",
+            UiTheme.FONT_CAPTION,
+            UiTheme.TEXT_MUTED,
+            SwingConstants.CENTER);
 
     public ShopFrame(Socket socket, DataInputStream input, DataOutputStream output) {
         this.socket = socket;
         this.input = input;
         this.output = output;
 
-        setTitle("\uD83D\uDED2 Fresh Grocery Market");
-        setSize(1040, 720);
-        setMinimumSize(new Dimension(980, 680));
+        setTitle("Fresh Basket Market");
+        setSize(1140, 780);
+        setMinimumSize(new Dimension(1020, 720));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setContentPane(createContentPanel());
@@ -78,8 +81,8 @@ public class ShopFrame extends JFrame {
     }
 
     private JPanel createContentPanel() {
-        GradientPanel background = new GradientPanel(new BorderLayout(22, 22), new Color(236, 253, 245), CREAM);
-        background.setBorder(new EmptyBorder(26, 30, 26, 30));
+        JPanel background = UiKit.decorativeBackdrop(new BorderLayout(24, 24));
+        background.setBorder(new EmptyBorder(28, 32, 28, 32));
         background.add(createHeaderPanel(), BorderLayout.NORTH);
         background.add(createItemsPanel(), BorderLayout.CENTER);
         background.add(createCheckoutPanel(), BorderLayout.EAST);
@@ -87,188 +90,143 @@ public class ShopFrame extends JFrame {
     }
 
     private JPanel createHeaderPanel() {
-        RoundedPanel headerPanel = new RoundedPanel(30, FOREST);
-        headerPanel.setLayout(new BorderLayout(18, 0));
-        headerPanel.setBorder(new EmptyBorder(28, 32, 28, 32));
+        JPanel header = UiKit.gradientCard(new BorderLayout(20, 0), UiTheme.PRIMARY_DEEP, UiTheme.ACCENT);
+        header.setBorder(new EmptyBorder(26, 32, 26, 32));
 
-        JLabel titleLabel = new JLabel("\uD83D\uDED2 Fresh Grocery Market");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 34));
-        titleLabel.setForeground(Color.WHITE);
+        JPanel textCol = UiKit.transparent(new GridLayout(2, 1, 0, 6));
+        textCol.add(UiKit.label("\uD83D\uDED2  Fresh Basket Market",
+                UiTheme.FONT_DISPLAY, UiTheme.TEXT_ON_PRIMARY, SwingConstants.LEFT));
+        textCol.add(UiKit.label("Handpicked produce, delightful prices, easy checkout",
+                UiTheme.FONT_BODY, UiTheme.TEXT_CREAM, SwingConstants.LEFT));
 
-        JLabel subtitleLabel = new JLabel("Hand-picked produce, clear prices, server-calculated checkout");
-        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        subtitleLabel.setForeground(MINT);
+        UiKit.RoundedPanel badge = new UiKit.RoundedPanel(20, UiTheme.HIGHLIGHT, 0, false);
+        badge.setLayout(new FlowLayout(FlowLayout.CENTER, 12, 10));
+        badge.setBorder(new EmptyBorder(6, 18, 6, 18));
+        badge.add(UiKit.label("Open now", UiTheme.FONT_BODY_BOLD, UiTheme.PRIMARY_DEEP, SwingConstants.CENTER));
 
-        JPanel textPanel = new TransparentPanel(new GridLayout(2, 1, 0, 4));
-        textPanel.add(titleLabel);
-        textPanel.add(subtitleLabel);
-
-        RoundedPanel badge = new RoundedPanel(24, new Color(236, 253, 245));
-        badge.setLayout(new FlowLayout(FlowLayout.CENTER, 18, 10));
-        JLabel badgeLabel = new JLabel("Premium Fresh Picks");
-        badgeLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        badgeLabel.setForeground(FOREST);
-        badge.add(badgeLabel);
-
-        headerPanel.add(textPanel, BorderLayout.CENTER);
-        headerPanel.add(badge, BorderLayout.EAST);
-        return headerPanel;
+        header.add(textCol, BorderLayout.CENTER);
+        header.add(badge, BorderLayout.EAST);
+        return header;
     }
 
     private JScrollPane createItemsPanel() {
-        JPanel gridPanel = new JPanel(new GridLayout(0, 2, 18, 18));
-        gridPanel.setOpaque(false);
-        gridPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-
+        JPanel grid = UiKit.transparent(new GridLayout(0, 2, 20, 20));
         for (GroceryItem item : ITEMS.values()) {
-            gridPanel.add(createItemCard(item));
+            grid.add(createItemCard(item));
         }
-
-        JScrollPane scrollPane = new JScrollPane(gridPanel);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        return scrollPane;
+        return UiKit.styledScroll(grid);
     }
 
     private JPanel createItemCard(GroceryItem item) {
-        RoundedPanel card = new RoundedPanel(28, CARD);
-        card.setLayout(new BorderLayout(16, 0));
+        UiKit.RoundedPanel card = new UiKit.RoundedPanel(28, UiTheme.CARD, 10, true);
+        card.setLayout(new BorderLayout(18, 0));
         card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 252, 231), 1),
-                new EmptyBorder(20, 20, 20, 20)));
+                BorderFactory.createLineBorder(UiTheme.BORDER_SOFT, 1),
+                new EmptyBorder(22, 22, 22, 22)));
 
-        RoundedPanel iconBubble = new RoundedPanel(28, item.accentColor);
-        iconBubble.setPreferredSize(new Dimension(92, 92));
+        UiKit.RoundedPanel iconBubble = new UiKit.RoundedPanel(26, item.accentColor, 0, false);
+        iconBubble.setPreferredSize(new Dimension(100, 100));
         iconBubble.setLayout(new BorderLayout());
-        JLabel iconLabel = new JLabel(item.icon, SwingConstants.CENTER);
-        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 46));
-        iconBubble.add(iconLabel, BorderLayout.CENTER);
+        iconBubble.add(UiKit.label(item.icon, UiTheme.FONT_EMOJI_LARGE, item.tagColor, SwingConstants.CENTER),
+                BorderLayout.CENTER);
 
-        JLabel nameLabel = new JLabel(item.name);
-        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        nameLabel.setForeground(TEXT_DARK);
+        JPanel info = UiKit.transparent(new GridLayout(4, 1, 0, 4));
+        info.add(UiKit.label(item.name, UiTheme.FONT_HEADING, UiTheme.TEXT_DARK, SwingConstants.LEFT));
+        info.add(UiKit.label(MONEY_FORMAT.format(item.price) + " LE / kg",
+                UiTheme.FONT_PRICE, UiTheme.PRIMARY, SwingConstants.LEFT));
+        info.add(UiKit.label(item.tagline, UiTheme.FONT_CAPTION, UiTheme.TEXT_MUTED, SwingConstants.LEFT));
 
-        JLabel priceLabel = new JLabel(MONEY_FORMAT.format(item.price) + " LE / Kg");
-        priceLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        priceLabel.setForeground(GREEN);
+        UiKit.RoundedPanel tag = new UiKit.RoundedPanel(12, item.accentColor, 0, false);
+        tag.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 2));
+        tag.setBorder(new EmptyBorder(4, 10, 4, 10));
+        tag.add(UiKit.label("Fresh today", UiTheme.FONT_CAPTION, item.tagColor, SwingConstants.LEFT));
+        info.add(tag);
 
-        JLabel hintLabel = new JLabel("Fresh stock available");
-        hintLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        hintLabel.setForeground(TEXT_MUTED);
+        UiKit.QuantityStepper stepper = UiKit.quantityStepper(0, 99, v -> updateBasketSummary());
+        steppers.put(item.name, stepper);
 
-        JPanel textPanel = new TransparentPanel(new GridLayout(3, 1, 0, 3));
-        textPanel.add(nameLabel);
-        textPanel.add(priceLabel);
-        textPanel.add(hintLabel);
+        JPanel right = UiKit.transparent(new BorderLayout(0, 14));
+        right.add(info, BorderLayout.CENTER);
 
-        JSpinner spinner = new JSpinner(new SpinnerNumberModel(0, 0, 99, 1));
-        spinner.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        spinner.setPreferredSize(new Dimension(84, 38));
-        spinner.addChangeListener(e -> updateSelectionSummary());
-        quantitySpinners.put(item.name, spinner);
-
-        RoundedPanel quantityPanel = new RoundedPanel(18, new Color(249, 250, 251));
-        quantityPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 9));
-        JLabel kgLabel = new JLabel("Kg");
-        kgLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        kgLabel.setForeground(TEXT_MUTED);
-        quantityPanel.add(kgLabel);
-        quantityPanel.add(spinner);
-
-        JPanel rightPanel = new TransparentPanel(new BorderLayout(0, 12));
-        rightPanel.add(textPanel, BorderLayout.CENTER);
-        rightPanel.add(quantityPanel, BorderLayout.SOUTH);
+        JPanel qtyRow = UiKit.transparent(new BorderLayout());
+        qtyRow.add(UiKit.label("Quantity (kg)", UiTheme.FONT_CAPTION, UiTheme.TEXT_MUTED, SwingConstants.LEFT),
+                BorderLayout.NORTH);
+        qtyRow.add(stepper, BorderLayout.CENTER);
+        right.add(qtyRow, BorderLayout.SOUTH);
 
         card.add(iconBubble, BorderLayout.WEST);
-        card.add(rightPanel, BorderLayout.CENTER);
+        card.add(right, BorderLayout.CENTER);
+        UiKit.installHoverLift(card);
         return card;
     }
 
     private JPanel createCheckoutPanel() {
-        RoundedPanel panel = new RoundedPanel(30, Color.WHITE);
-        panel.setPreferredSize(new Dimension(300, 0));
-        panel.setLayout(new BorderLayout(0, 20));
+        UiKit.RoundedPanel panel = new UiKit.RoundedPanel(30, UiTheme.CARD, 12, true);
+        panel.setPreferredSize(new Dimension(320, 0));
+        panel.setLayout(new BorderLayout(0, 22));
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 252, 231), 1),
-                new EmptyBorder(28, 24, 28, 24)));
+                BorderFactory.createLineBorder(UiTheme.BORDER_SOFT, 1),
+                new EmptyBorder(28, 26, 28, 26)));
 
-        JLabel title = new JLabel("Your Basket");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        title.setForeground(TEXT_DARK);
+        JPanel top = UiKit.transparent(new GridLayout(2, 1, 0, 6));
+        top.add(UiKit.label("Your basket", UiTheme.FONT_TITLE, UiTheme.TEXT_DARK, SwingConstants.LEFT));
+        top.add(itemCountLabel);
 
-        itemCountLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        itemCountLabel.setForeground(TEXT_MUTED);
-
-        JPanel topPanel = new TransparentPanel(new GridLayout(2, 1, 0, 6));
-        topPanel.add(title);
-        topPanel.add(itemCountLabel);
-
-        RoundedPanel totalCard = new RoundedPanel(26, new Color(240, 253, 244));
-        totalCard.setLayout(new GridLayout(3, 1, 0, 8));
-        totalCard.setBorder(new EmptyBorder(22, 18, 22, 18));
-
-        JLabel totalCaption = new JLabel("Total Price", SwingConstants.CENTER);
-        totalCaption.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        totalCaption.setForeground(TEXT_MUTED);
-
-        totalLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        totalLabel.setFont(new Font("Segoe UI", Font.BOLD, 34));
-        totalLabel.setForeground(FOREST);
-
-        JLabel totalHint = new JLabel("Calculated by server", SwingConstants.CENTER);
-        totalHint.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        totalHint.setForeground(TEXT_MUTED);
-
-        totalCard.add(totalCaption);
+        UiKit.RoundedPanel totalCard = new UiKit.RoundedPanel(26, UiTheme.SURFACE_WARM, 0, false);
+        totalCard.setLayout(new GridLayout(3, 1, 0, 6));
+        totalCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(UiTheme.BORDER, 1),
+                new EmptyBorder(24, 16, 24, 16)));
+        totalCard.add(UiKit.label("Basket total", UiTheme.FONT_BODY_BOLD, UiTheme.TEXT_MUTED, SwingConstants.CENTER));
         totalCard.add(totalLabel);
-        totalCard.add(totalHint);
+        totalCard.add(estimateHint);
 
-        JButton checkoutButton = new RoundedButton("Checkout Order");
-        checkoutButton.addActionListener(e -> checkout());
+        javax.swing.JButton checkoutButton = UiKit.primaryButton("Checkout", this::checkout);
+        checkoutButton.setPreferredSize(new Dimension(260, 52));
 
-        JLabel protocolLabel = new JLabel("<html><center>Secure TCP checkout<br>using writeUTF/readUTF</center></html>");
-        protocolLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        protocolLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        protocolLabel.setForeground(TEXT_MUTED);
+        JPanel bottom = UiKit.transparent(new BorderLayout());
+        bottom.add(checkoutButton, BorderLayout.CENTER);
 
-        JPanel bottomPanel = new TransparentPanel(new BorderLayout(0, 12));
-        bottomPanel.add(checkoutButton, BorderLayout.NORTH);
-        bottomPanel.add(protocolLabel, BorderLayout.CENTER);
-
-        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(top, BorderLayout.NORTH);
         panel.add(totalCard, BorderLayout.CENTER);
-        panel.add(bottomPanel, BorderLayout.SOUTH);
+        panel.add(bottom, BorderLayout.SOUTH);
         return panel;
     }
 
-    private void updateSelectionSummary() {
+    private void updateBasketSummary() {
         int selectedTypes = 0;
         int totalKg = 0;
+        double estimate = 0.0;
 
-        for (JSpinner spinner : quantitySpinners.values()) {
-            int quantity = (Integer) spinner.getValue();
-            if (quantity > 0) {
+        for (Map.Entry<String, UiKit.QuantityStepper> entry : steppers.entrySet()) {
+            int qty = entry.getValue().getValue();
+            if (qty > 0) {
                 selectedTypes++;
-                totalKg += quantity;
+                totalKg += qty;
+                GroceryItem item = ITEMS.get(entry.getKey());
+                estimate += item.price * qty;
             }
         }
 
         if (selectedTypes == 0) {
-            itemCountLabel.setText("Choose your groceries");
+            itemCountLabel.setText("Add items to your basket");
+            totalLabel.setText("0.00 LE");
+            totalLabel.setForeground(UiTheme.TEXT_MUTED);
+            estimateHint.setText("Updates as you shop");
         } else {
-            itemCountLabel.setText(selectedTypes + " item types, " + totalKg + " kg selected");
+            itemCountLabel.setText(selectedTypes + " products, " + totalKg + " kg selected");
+            totalLabel.setText(MONEY_FORMAT.format(estimate) + " LE");
+            totalLabel.setForeground(UiTheme.PRIMARY_DEEP);
         }
     }
 
     private void checkout() {
         StringBuilder orderMessage = new StringBuilder("CHECKOUT:");
-        StringBuilder receipt = new StringBuilder("Fresh Grocery Market\n\n");
+        List<CheckoutDialog.ReceiptLine> receiptLines = new ArrayList<CheckoutDialog.ReceiptLine>();
         boolean hasItems = false;
 
-        for (Map.Entry<String, JSpinner> entry : quantitySpinners.entrySet()) {
-            int quantity = (Integer) entry.getValue().getValue();
+        for (Map.Entry<String, UiKit.QuantityStepper> entry : steppers.entrySet()) {
+            int quantity = entry.getValue().getValue();
             if (quantity > 0) {
                 if (hasItems) {
                     orderMessage.append(",");
@@ -276,21 +234,17 @@ public class ShopFrame extends JFrame {
                 orderMessage.append(entry.getKey()).append("=").append(quantity);
 
                 GroceryItem item = ITEMS.get(entry.getKey());
-                receipt.append(item.name)
-                        .append("  x ")
-                        .append(quantity)
-                        .append(" kg   ")
-                        .append(MONEY_FORMAT.format(item.price * quantity))
-                        .append(" LE\n");
+                double lineTotal = item.price * quantity;
+                receiptLines.add(new CheckoutDialog.ReceiptLine(
+                        item.icon, item.name, quantity, lineTotal));
                 hasItems = true;
             }
         }
 
         if (!hasItems) {
-            JOptionPane.showMessageDialog(this,
-                    "Please select at least one item before checkout.",
-                    "No Items Selected",
-                    JOptionPane.WARNING_MESSAGE);
+            CheckoutDialog.showWarning(this,
+                    "Your basket is empty",
+                    "Please add at least one item before checking out.");
             return;
         }
 
@@ -302,27 +256,22 @@ public class ShopFrame extends JFrame {
             if (response.startsWith("TOTAL:")) {
                 double total = Double.parseDouble(response.substring("TOTAL:".length()));
                 totalLabel.setText(MONEY_FORMAT.format(total) + " LE");
-                receipt.append("\nTotal: ").append(MONEY_FORMAT.format(total)).append(" LE");
-                JOptionPane.showMessageDialog(this,
-                        receipt.toString(),
-                        "Checkout Receipt",
-                        JOptionPane.INFORMATION_MESSAGE);
+                totalLabel.setForeground(UiTheme.PRIMARY_DEEP);
+                estimateHint.setText("Order complete");
+                CheckoutDialog.showReceipt(this, receiptLines, total);
             } else {
-                JOptionPane.showMessageDialog(this,
-                        "Server returned an unexpected response: " + response,
-                        "Checkout Error",
-                        JOptionPane.ERROR_MESSAGE);
+                CheckoutDialog.showError(this,
+                        "Checkout failed",
+                        "Something went wrong. Please try again.");
             }
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Could not complete checkout: " + e.getMessage(),
-                    "Network Error",
-                    JOptionPane.ERROR_MESSAGE);
+            CheckoutDialog.showError(this,
+                    "Checkout failed",
+                    "We could not complete your order. Please check your connection.");
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Server returned an invalid total.",
-                    "Checkout Error",
-                    JOptionPane.ERROR_MESSAGE);
+            CheckoutDialog.showError(this,
+                    "Checkout failed",
+                    "We received an invalid total. Please try again.");
         }
     }
 
@@ -340,12 +289,10 @@ public class ShopFrame extends JFrame {
             output.writeUTF("EXIT");
             output.flush();
         } catch (IOException ignored) {
-            // The connection may already be closed.
         } finally {
             try {
                 socket.close();
             } catch (IOException ignored) {
-                // Nothing else to clean up after the window closes.
             }
         }
     }
@@ -353,87 +300,18 @@ public class ShopFrame extends JFrame {
     private static class GroceryItem {
         private final String icon;
         private final String name;
+        private final String tagline;
         private final double price;
         private final Color accentColor;
+        private final Color tagColor;
 
-        private GroceryItem(String icon, String name, double price, Color accentColor) {
+        private GroceryItem(String icon, String name, String tagline, double price, Color accentColor, Color tagColor) {
             this.icon = icon;
             this.name = name;
+            this.tagline = tagline;
             this.price = price;
             this.accentColor = accentColor;
-        }
-    }
-
-    private static class GradientPanel extends JPanel {
-        private final Color startColor;
-        private final Color endColor;
-
-        private GradientPanel(java.awt.LayoutManager layout, Color startColor, Color endColor) {
-            super(layout);
-            this.startColor = startColor;
-            this.endColor = endColor;
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setPaint(new GradientPaint(0, 0, startColor, getWidth(), getHeight(), endColor));
-            g2.fillRect(0, 0, getWidth(), getHeight());
-            g2.dispose();
-            super.paintComponent(g);
-        }
-    }
-
-    private static class RoundedPanel extends JPanel {
-        private final int radius;
-        private final Color backgroundColor;
-
-        private RoundedPanel(int radius, Color backgroundColor) {
-            this.radius = radius;
-            this.backgroundColor = backgroundColor;
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(backgroundColor);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
-            g2.dispose();
-            super.paintComponent(g);
-        }
-    }
-
-    private static class TransparentPanel extends JPanel {
-        private TransparentPanel(java.awt.LayoutManager layout) {
-            super(layout);
-            setOpaque(false);
-        }
-    }
-
-    private static class RoundedButton extends JButton {
-        private RoundedButton(String text) {
-            super(text);
-            setPreferredSize(new Dimension(210, 50));
-            setForeground(Color.WHITE);
-            setFont(new Font("Segoe UI", Font.BOLD, 16));
-            setFocusPainted(false);
-            setBorderPainted(false);
-            setContentAreaFilled(false);
-            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setPaint(new GradientPaint(0, 0, GREEN, getWidth(), getHeight(), FOREST));
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 22, 22);
-            g2.dispose();
-            super.paintComponent(g);
+            this.tagColor = tagColor;
         }
     }
 }
